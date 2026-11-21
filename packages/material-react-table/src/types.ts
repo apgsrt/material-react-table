@@ -41,16 +41,25 @@ import {
 } from '@tanstack/react-virtual';
 import { type AlertProps } from '@mui/material/Alert';
 import { type AutocompleteProps } from '@mui/material/Autocomplete';
+import { type BadgeProps } from '@mui/material/Badge';
 import { type BoxProps } from '@mui/material/Box';
 import { type ButtonProps } from '@mui/material/Button';
 import { type CheckboxProps } from '@mui/material/Checkbox';
 import { type ChipProps } from '@mui/material/Chip';
 import { type CircularProgressProps } from '@mui/material/CircularProgress';
 import { type DialogProps } from '@mui/material/Dialog';
+import { type DividerProps } from '@mui/material/Divider';
 import { type IconButtonProps } from '@mui/material/IconButton';
+import { type InputLabelProps } from '@mui/material/InputLabel';
 import { type LinearProgressProps } from '@mui/material/LinearProgress';
-import { type PaginationProps } from '@mui/material/Pagination';
+import { type MenuProps } from '@mui/material/Menu';
+import {
+  type PaginationProps,
+  type PaginationRenderItemParams,
+} from '@mui/material/Pagination';
+import { type PaginationItemProps } from '@mui/material/PaginationItem';
 import { type PaperProps } from '@mui/material/Paper';
+import { type PopoverProps } from '@mui/material/Popover';
 import { type RadioProps } from '@mui/material/Radio';
 import { type SelectProps } from '@mui/material/Select';
 import { type SkeletonProps } from '@mui/material/Skeleton';
@@ -62,7 +71,10 @@ import { type TableContainerProps } from '@mui/material/TableContainer';
 import { type TableFooterProps } from '@mui/material/TableFooter';
 import { type TableHeadProps } from '@mui/material/TableHead';
 import { type TableRowProps } from '@mui/material/TableRow';
+import { type TableSortLabelProps } from '@mui/material/TableSortLabel';
 import { type TextFieldProps } from '@mui/material/TextField';
+import { type TooltipProps } from '@mui/material/Tooltip';
+import { type TypographyProps } from '@mui/material/Typography';
 import { type Theme } from '@mui/material/styles';
 import {
   type DatePickerProps,
@@ -552,12 +564,18 @@ export interface MRT_ColumnDef<TData extends MRT_RowData, TValue = unknown>
    * @default gets set to the same value as `accessorKey` by default
    */
   id?: LiteralUnion<string & keyof TData>;
+  muiColumnActionMenuProps?:
+    | ((props: {
+        column: MRT_Column<TData>;
+        table: MRT_TableInstance<TData>;
+      }) => Partial<MenuProps>)
+    | Partial<MenuProps>;
   muiColumnActionsButtonProps?:
     | ((props: {
         column: MRT_Column<TData>;
         table: MRT_TableInstance<TData>;
-      }) => IconButtonProps)
-    | IconButtonProps;
+      }) => IconButtonProps & { TooltipProps?: Partial<TooltipProps> })
+    | (IconButtonProps & { TooltipProps?: Partial<TooltipProps> });
   muiColumnDragHandleProps?:
     | ((props: {
         column: MRT_Column<TData>;
@@ -640,12 +658,42 @@ export interface MRT_ColumnDef<TData extends MRT_RowData, TValue = unknown>
         table: MRT_TableInstance<TData>;
       }) => TableCellProps)
     | TableCellProps;
+  muiTableHeadCellFilterLabelProps?:
+    | ((props: {
+        column: MRT_Column<TData>;
+        table: MRT_TableInstance<TData>;
+      }) => IconButtonProps & {
+        PopoverProps?: Partial<PopoverProps>;
+        TooltipProps?: Partial<TooltipProps>;
+      })
+    | (IconButtonProps & {
+        PopoverProps?: Partial<PopoverProps>;
+        TooltipProps?: Partial<TooltipProps>;
+      });
   muiTableHeadCellProps?:
     | ((props: {
         column: MRT_Column<TData>;
         table: MRT_TableInstance<TData>;
       }) => TableCellProps)
     | TableCellProps;
+  muiTableHeadCellResizeHandleProps?:
+    | ((props: {
+        column: MRT_Column<TData>;
+        table: MRT_TableInstance<TData>;
+      }) => DividerProps & { BoxProps?: Partial<BoxProps> })
+    | (DividerProps & { BoxProps?: Partial<BoxProps> });
+  muiTableHeadCellSortLabelProps?:
+    | ((props: {
+        column: MRT_Column<TData>;
+        table: MRT_TableInstance<TData>;
+      }) => TableSortLabelProps & {
+        BadgeProps?: Partial<BadgeProps>;
+        TooltipProps?: Partial<TooltipProps>;
+      })
+    | (TableSortLabelProps & {
+        BadgeProps?: Partial<BadgeProps>;
+        TooltipProps?: Partial<TooltipProps>;
+      });
   PlaceholderCell?: (props: {
     cell: MRT_Cell<TData, TValue>;
     column: MRT_Column<TData, TValue>;
@@ -919,17 +967,31 @@ export interface MRT_TableOptions<TData extends MRT_RowData>
   muiBottomToolbarProps?:
     | ((props: { table: MRT_TableInstance<TData> }) => BoxProps)
     | BoxProps;
+  muiCellActionMenuProps?:
+    | ((props: {
+        cell: MRT_Cell<TData>;
+        column: MRT_Column<TData>;
+        row: MRT_Row<TData>;
+        table: MRT_TableInstance<TData>;
+      }) => Partial<MenuProps>)
+    | Partial<MenuProps>;
   muiCircularProgressProps?:
     | ((props: {
         table: MRT_TableInstance<TData>;
       }) => CircularProgressProps & { Component?: ReactNode })
     | (CircularProgressProps & { Component?: ReactNode });
+  muiColumnActionMenuProps?:
+    | ((props: {
+        column: MRT_Column<TData>;
+        table: MRT_TableInstance<TData>;
+      }) => Partial<MenuProps>)
+    | Partial<MenuProps>;
   muiColumnActionsButtonProps?:
     | ((props: {
         column: MRT_Column<TData>;
         table: MRT_TableInstance<TData>;
-      }) => IconButtonProps)
-    | IconButtonProps;
+      }) => IconButtonProps & { TooltipProps?: Partial<TooltipProps> })
+    | (IconButtonProps & { TooltipProps?: Partial<TooltipProps> });
   muiColumnDragHandleProps?:
     | ((props: {
         column: MRT_Column<TData>;
@@ -1006,6 +1068,12 @@ export interface MRT_TableOptions<TData extends MRT_RowData>
         table: MRT_TableInstance<TData>;
       }) => DateTimePickerProps<never>)
     | DateTimePickerProps<never>;
+  muiFilterOptionMenuProps?:
+    | ((props: {
+        column?: MRT_Column<TData>;
+        table: MRT_TableInstance<TData>;
+      }) => Partial<MenuProps>)
+    | Partial<MenuProps>;
   muiFilterSliderProps?:
     | ((props: {
         column: MRT_Column<TData>;
@@ -1035,6 +1103,18 @@ export interface MRT_TableOptions<TData extends MRT_RowData>
   muiPaginationProps?:
     | ((props: { table: MRT_TableInstance<TData> }) => Partial<
         PaginationProps & {
+          DisplayedRowsProps?: Partial<TypographyProps>;
+          FirstButtonProps?: Partial<IconButtonProps>;
+          LastButtonProps?: Partial<IconButtonProps>;
+          NextButtonProps?: Partial<IconButtonProps>;
+          PaginationItemProps?:
+            | ((
+                item: PaginationRenderItemParams,
+              ) => Partial<PaginationItemProps>)
+            | Partial<PaginationItemProps>;
+          PreviousButtonProps?: Partial<IconButtonProps>;
+          RootProps?: Partial<BoxProps>;
+          SelectLabelProps?: Partial<InputLabelProps>;
           SelectProps?: Partial<SelectProps>;
           disabled?: boolean;
           rowsPerPageOptions?: { label: string; value: number }[] | number[];
@@ -1043,12 +1123,31 @@ export interface MRT_TableOptions<TData extends MRT_RowData>
       >)
     | Partial<
         PaginationProps & {
+          DisplayedRowsProps?: Partial<TypographyProps>;
+          FirstButtonProps?: Partial<IconButtonProps>;
+          LastButtonProps?: Partial<IconButtonProps>;
+          NextButtonProps?: Partial<IconButtonProps>;
+          PaginationItemProps?:
+            | ((
+                item: PaginationRenderItemParams,
+              ) => Partial<PaginationItemProps>)
+            | Partial<PaginationItemProps>;
+          PreviousButtonProps?: Partial<IconButtonProps>;
+          RootProps?: Partial<BoxProps>;
+          SelectLabelProps?: Partial<InputLabelProps>;
           SelectProps?: Partial<SelectProps>;
           disabled?: boolean;
           rowsPerPageOptions?: { label: string; value: number }[] | number[];
           showRowsPerPage?: boolean;
         }
       >;
+  muiRowActionMenuProps?:
+    | ((props: {
+        row: MRT_Row<TData>;
+        staticRowIndex?: number;
+        table: MRT_TableInstance<TData>;
+      }) => Partial<MenuProps>)
+    | Partial<MenuProps>;
   muiRowDragHandleProps?:
     | ((props: {
         row: MRT_Row<TData>;
@@ -1068,6 +1167,9 @@ export interface MRT_TableOptions<TData extends MRT_RowData>
         table: MRT_TableInstance<TData>;
       }) => CheckboxProps | RadioProps)
     | (CheckboxProps | RadioProps);
+  muiShowHideColumnsMenuProps?:
+    | ((props: { table: MRT_TableInstance<TData> }) => Partial<MenuProps>)
+    | Partial<MenuProps>;
   muiSkeletonProps?:
     | ((props: {
         cell: MRT_Cell<TData>;
@@ -1113,12 +1215,42 @@ export interface MRT_TableOptions<TData extends MRT_RowData>
         table: MRT_TableInstance<TData>;
       }) => TableRowProps)
     | TableRowProps;
+  muiTableHeadCellFilterLabelProps?:
+    | ((props: {
+        column: MRT_Column<TData>;
+        table: MRT_TableInstance<TData>;
+      }) => IconButtonProps & {
+        PopoverProps?: Partial<PopoverProps>;
+        TooltipProps?: Partial<TooltipProps>;
+      })
+    | (IconButtonProps & {
+        PopoverProps?: Partial<PopoverProps>;
+        TooltipProps?: Partial<TooltipProps>;
+      });
   muiTableHeadCellProps?:
     | ((props: {
         column: MRT_Column<TData>;
         table: MRT_TableInstance<TData>;
       }) => TableCellProps)
     | TableCellProps;
+  muiTableHeadCellResizeHandleProps?:
+    | ((props: {
+        column: MRT_Column<TData>;
+        table: MRT_TableInstance<TData>;
+      }) => DividerProps & { BoxProps?: Partial<BoxProps> })
+    | (DividerProps & { BoxProps?: Partial<BoxProps> });
+  muiTableHeadCellSortLabelProps?:
+    | ((props: {
+        column: MRT_Column<TData>;
+        table: MRT_TableInstance<TData>;
+      }) => TableSortLabelProps & {
+        BadgeProps?: Partial<BadgeProps>;
+        TooltipProps?: Partial<TooltipProps>;
+      })
+    | (TableSortLabelProps & {
+        BadgeProps?: Partial<BadgeProps>;
+        TooltipProps?: Partial<TooltipProps>;
+      });
   muiTableHeadProps?:
     | ((props: { table: MRT_TableInstance<TData> }) => TableHeadProps)
     | TableHeadProps;

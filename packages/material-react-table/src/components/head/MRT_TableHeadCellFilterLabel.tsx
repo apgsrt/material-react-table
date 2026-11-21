@@ -2,8 +2,8 @@ import { type MouseEvent, useState } from 'react';
 import Box from '@mui/material/Box';
 import Grow from '@mui/material/Grow';
 import IconButton, { type IconButtonProps } from '@mui/material/IconButton';
-import Popover from '@mui/material/Popover';
-import Tooltip from '@mui/material/Tooltip';
+import Popover, { type PopoverProps } from '@mui/material/Popover';
+import Tooltip, { type TooltipProps } from '@mui/material/Tooltip';
 import { MRT_TableHeadCellFilterContainer } from './MRT_TableHeadCellFilterContainer';
 import {
   type MRT_Header,
@@ -18,6 +18,8 @@ import { getValueAndLabel, parseFromValuesOrFunc } from '../../utils/utils';
 
 export interface MRT_TableHeadCellFilterLabelProps<TData extends MRT_RowData>
   extends IconButtonProps {
+  PopoverProps?: Partial<PopoverProps>;
+  TooltipProps?: Partial<TooltipProps>;
   header: MRT_Header<TData>;
   table: MRT_TableInstance<TData>;
 }
@@ -32,12 +34,25 @@ export const MRT_TableHeadCellFilterLabel = <TData extends MRT_RowData = {}>({
       columnFilterDisplayMode,
       icons: { FilterAltIcon },
       localization,
+      muiTableHeadCellFilterLabelProps,
     },
     refs: { filterInputRefs },
     setShowColumnFilters,
   } = table;
   const { column } = header;
   const { columnDef } = column;
+
+  const { PopoverProps, TooltipProps, ...iconButtonProps } = {
+    ...parseFromValuesOrFunc(muiTableHeadCellFilterLabelProps, {
+      column,
+      table,
+    }),
+    ...parseFromValuesOrFunc(columnDef.muiTableHeadCellFilterLabelProps, {
+      column,
+      table,
+    }),
+    ...rest,
+  };
 
   const filterValue = column.getFilterValue() as [string, string] | string;
 
@@ -113,10 +128,13 @@ export const MRT_TableHeadCellFilterLabel = <TData extends MRT_RowData = {}>({
         unmountOnExit
       >
         <Box component="span" sx={{ flex: '0 0' }}>
-          <Tooltip placement="top" title={filterTooltip}>
+          <Tooltip placement="top" title={filterTooltip} {...TooltipProps}>
             <IconButton
               disableRipple
+              size="small"
+              {...iconButtonProps}
               onClick={(event: MouseEvent<HTMLButtonElement>) => {
+                iconButtonProps?.onClick?.(event);
                 if (columnFilterDisplayMode === 'popover') {
                   setAnchorEl(event.currentTarget);
                 } else {
@@ -128,8 +146,6 @@ export const MRT_TableHeadCellFilterLabel = <TData extends MRT_RowData = {}>({
                 });
                 event.stopPropagation();
               }}
-              size="small"
-              {...rest}
               sx={(theme) => ({
                 height: '16px',
                 ml: '4px',
@@ -138,10 +154,10 @@ export const MRT_TableHeadCellFilterLabel = <TData extends MRT_RowData = {}>({
                 transform: 'scale(0.75)',
                 transition: 'all 150ms ease-in-out',
                 width: '16px',
-                ...(parseFromValuesOrFunc(rest?.sx, theme) as any),
+                ...(parseFromValuesOrFunc(iconButtonProps?.sx, theme) as any),
               })}
             >
-              <FilterAltIcon />
+              {iconButtonProps?.children ?? <FilterAltIcon />}
             </IconButton>
           </Tooltip>
         </Box>
@@ -162,10 +178,23 @@ export const MRT_TableHeadCellFilterLabel = <TData extends MRT_RowData = {}>({
           }}
           onKeyDown={(event) => event.key === 'Enter' && setAnchorEl(null)}
           open={!!anchorEl}
-          slotProps={{ paper: { sx: { overflow: 'visible' } } }}
           transformOrigin={{
             horizontal: 'center',
             vertical: 'bottom',
+          }}
+          {...PopoverProps}
+          slotProps={{
+            ...PopoverProps?.slotProps,
+            paper: {
+              ...PopoverProps?.slotProps?.paper,
+              sx: (theme: any) => ({
+                overflow: 'visible',
+                ...(parseFromValuesOrFunc(
+                  (PopoverProps?.slotProps?.paper as any)?.sx,
+                  theme,
+                ) as any),
+              }),
+            },
           }}
         >
           <Box sx={{ p: '1rem' }}>

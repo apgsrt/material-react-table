@@ -35,10 +35,20 @@ export const MRT_RowActionMenu = <TData extends MRT_RowData>({
       icons: { EditIcon },
       localization,
       mrtTheme: { menuBackgroundColor },
+      muiRowActionMenuProps,
       renderRowActionMenuItems,
     },
   } = table;
   const { density } = getState();
+
+  const { MenuListProps, ...menuProps } = {
+    ...parseFromValuesOrFunc(muiRowActionMenuProps, {
+      row,
+      staticRowIndex,
+      table,
+    }),
+    ...rest,
+  };
 
   const menuItems = useMemo(() => {
     const items: ReactNode[] = [];
@@ -67,18 +77,20 @@ export const MRT_RowActionMenu = <TData extends MRT_RowData>({
 
   return (
     <Menu
-      MenuListProps={{
-        dense: density === 'compact',
-        sx: {
-          backgroundColor: menuBackgroundColor,
-        },
-      }}
       anchorEl={anchorEl}
       disableScrollLock
       onClick={(event) => event.stopPropagation()}
       onClose={() => setAnchorEl(null)}
       open={!!anchorEl}
-      {...rest}
+      {...menuProps}
+      MenuListProps={{
+        ...MenuListProps,
+        dense: MenuListProps?.dense ?? density === 'compact',
+        sx: (theme) => ({
+          backgroundColor: menuBackgroundColor,
+          ...(parseFromValuesOrFunc(MenuListProps?.sx, theme) as any),
+        }),
+      }}
     >
       {menuItems}
     </Menu>

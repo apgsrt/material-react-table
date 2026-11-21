@@ -1,4 +1,4 @@
-import Box from '@mui/material/Box';
+import Box, { type BoxProps } from '@mui/material/Box';
 import Divider, { type DividerProps } from '@mui/material/Divider';
 import {
   type MRT_Header,
@@ -9,6 +9,7 @@ import { parseFromValuesOrFunc } from '../../utils/utils';
 
 export interface MRT_TableHeadCellResizeHandleProps<TData extends MRT_RowData>
   extends DividerProps {
+  BoxProps?: Partial<BoxProps>;
   header: MRT_Header<TData>;
   table: MRT_TableInstance<TData>;
 }
@@ -20,11 +21,28 @@ export const MRT_TableHeadCellResizeHandle = <TData extends MRT_RowData>({
 }: MRT_TableHeadCellResizeHandleProps<TData>) => {
   const {
     getState,
-    options: { columnResizeDirection, columnResizeMode },
+    options: {
+      columnResizeDirection,
+      columnResizeMode,
+      muiTableHeadCellResizeHandleProps,
+    },
     setColumnSizingInfo,
   } = table;
   const { density } = getState();
   const { column } = header;
+  const { columnDef } = column;
+
+  const { BoxProps: boxProps, ...dividerProps } = {
+    ...parseFromValuesOrFunc(muiTableHeadCellResizeHandleProps, {
+      column,
+      table,
+    }),
+    ...parseFromValuesOrFunc(columnDef.muiTableHeadCellResizeHandleProps, {
+      column,
+      table,
+    }),
+    ...rest,
+  };
 
   const handler = header.getResizeHandler();
 
@@ -40,15 +58,23 @@ export const MRT_TableHeadCellResizeHandle = <TData extends MRT_RowData>({
   return (
     <Box
       className="Mui-TableHeadCell-ResizeHandle-Wrapper"
-      onDoubleClick={() => {
+      {...boxProps}
+      onDoubleClick={(event) => {
+        boxProps?.onDoubleClick?.(event);
         setColumnSizingInfo((old) => ({
           ...old,
           isResizingColumn: false,
         }));
         column.resetSize();
       }}
-      onMouseDown={handler}
-      onTouchStart={handler}
+      onMouseDown={(event) => {
+        boxProps?.onMouseDown?.(event);
+        handler(event as any);
+      }}
+      onTouchStart={(event) => {
+        boxProps?.onTouchStart?.(event);
+        handler(event as any);
+      }}
       style={{
         transform:
           column.getIsResizing() && columnResizeMode === 'onEnd'
@@ -57,6 +83,7 @@ export const MRT_TableHeadCellResizeHandle = <TData extends MRT_RowData>({
                 (getState().columnSizingInfo.deltaOffset ?? 0)
               }px)`
             : undefined,
+        ...boxProps?.style,
       }}
       sx={(theme) => ({
         '&:active > hr': {
@@ -71,12 +98,14 @@ export const MRT_TableHeadCellResizeHandle = <TData extends MRT_RowData>({
         position: 'absolute',
         px: '4px',
         right: columnResizeDirection === 'ltr' ? lr : undefined,
+        ...(parseFromValuesOrFunc(boxProps?.sx, theme) as any),
       })}
     >
       <Divider
         className="Mui-TableHeadCell-ResizeHandle-Divider"
         flexItem
         orientation="vertical"
+        {...dividerProps}
         sx={(theme) => ({
           borderRadius: '2px',
           borderWidth: '2px',
@@ -88,7 +117,7 @@ export const MRT_TableHeadCellResizeHandle = <TData extends MRT_RowData>({
             : 'all 150ms ease-in-out',
           userSelect: 'none',
           zIndex: 4,
-          ...(parseFromValuesOrFunc(rest?.sx, theme) as any),
+          ...(parseFromValuesOrFunc(dividerProps?.sx, theme) as any),
         })}
       />
     </Box>

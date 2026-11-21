@@ -22,6 +22,7 @@ export const MRT_CellActionMenu = <TData extends MRT_RowData>({
       icons: { ContentCopy, EditIcon },
       localization,
       mrtTheme: { menuBackgroundColor },
+      muiCellActionMenuProps,
       renderCellActionMenuItems,
     },
     refs: { actionCellRef },
@@ -31,6 +32,16 @@ export const MRT_CellActionMenu = <TData extends MRT_RowData>({
   const { row } = cell;
   const { column } = cell;
   const { columnDef } = column;
+
+  const { MenuListProps, ...menuProps } = {
+    ...parseFromValuesOrFunc(muiCellActionMenuProps, {
+      cell,
+      column,
+      row,
+      table,
+    }),
+    ...rest,
+  };
 
   const handleClose = (event?: any) => {
     event?.stopPropagation();
@@ -84,19 +95,21 @@ export const MRT_CellActionMenu = <TData extends MRT_RowData>({
   return (
     (!!menuItems?.length || !!internalMenuItems?.length) && (
       <Menu
-        MenuListProps={{
-          dense: density === 'compact',
-          sx: {
-            backgroundColor: menuBackgroundColor,
-          },
-        }}
         anchorEl={actionCellRef.current}
         disableScrollLock
         onClick={(event) => event.stopPropagation()}
         onClose={handleClose}
         open={!!cell}
         transformOrigin={{ horizontal: -100, vertical: 8 }}
-        {...rest}
+        {...menuProps}
+        MenuListProps={{
+          ...MenuListProps,
+          dense: MenuListProps?.dense ?? density === 'compact',
+          sx: (theme) => ({
+            backgroundColor: menuBackgroundColor,
+            ...(parseFromValuesOrFunc(MenuListProps?.sx, theme) as any),
+          }),
+        }}
       >
         {menuItems ?? internalMenuItems}
       </Menu>

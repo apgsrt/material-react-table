@@ -1,6 +1,6 @@
 import { type MouseEvent, useState } from 'react';
 import IconButton, { type IconButtonProps } from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
+import Tooltip, { type TooltipProps } from '@mui/material/Tooltip';
 import {
   type MRT_Header,
   type MRT_RowData,
@@ -13,6 +13,7 @@ import { MRT_ColumnActionMenu } from '../menus/MRT_ColumnActionMenu';
 export interface MRT_TableHeadCellColumnActionsButtonProps<
   TData extends MRT_RowData,
 > extends IconButtonProps {
+  TooltipProps?: Partial<TooltipProps>;
   header: MRT_Header<TData>;
   table: MRT_TableInstance<TData>;
 }
@@ -42,7 +43,7 @@ export const MRT_TableHeadCellColumnActionsButton = <
     setAnchorEl(event.currentTarget);
   };
 
-  const iconButtonProps = {
+  const { TooltipProps, ...iconButtonProps } = {
     ...parseFromValuesOrFunc(muiColumnActionsButtonProps, {
       column,
       table,
@@ -59,12 +60,16 @@ export const MRT_TableHeadCellColumnActionsButton = <
       <Tooltip
         {...getCommonTooltipProps('top')}
         title={iconButtonProps?.title ?? localization.columnActions}
+        {...TooltipProps}
       >
         <IconButton
           aria-label={localization.columnActions}
-          onClick={handleClick}
           size="small"
           {...iconButtonProps}
+          onClick={(event) => {
+            iconButtonProps?.onClick?.(event);
+            handleClick(event);
+          }}
           sx={(theme) => ({
             '&:hover': {
               opacity: 1,

@@ -1,12 +1,17 @@
-import Box from '@mui/material/Box';
-import IconButton from '@mui/material/IconButton';
-import InputLabel from '@mui/material/InputLabel';
+import Box, { type BoxProps } from '@mui/material/Box';
+import IconButton, { type IconButtonProps } from '@mui/material/IconButton';
+import InputLabel, { type InputLabelProps } from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
-import Pagination, { type PaginationProps } from '@mui/material/Pagination';
-import PaginationItem from '@mui/material/PaginationItem';
+import Pagination, {
+  type PaginationProps,
+  type PaginationRenderItemParams,
+} from '@mui/material/Pagination';
+import PaginationItem, {
+  type PaginationItemProps,
+} from '@mui/material/PaginationItem';
 import Select, { type SelectProps } from '@mui/material/Select';
 import Tooltip from '@mui/material/Tooltip';
-import Typography from '@mui/material/Typography';
+import Typography, { type TypographyProps } from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { type MRT_RowData, type MRT_TableInstance } from '../../types';
@@ -18,6 +23,16 @@ const defaultRowsPerPage = [5, 10, 15, 20, 25, 30, 50, 100];
 export interface MRT_TablePaginationProps<TData extends MRT_RowData>
   extends Partial<
     PaginationProps & {
+      DisplayedRowsProps?: Partial<TypographyProps>;
+      FirstButtonProps?: Partial<IconButtonProps>;
+      LastButtonProps?: Partial<IconButtonProps>;
+      NextButtonProps?: Partial<IconButtonProps>;
+      PaginationItemProps?:
+        | ((item: PaginationRenderItemParams) => Partial<PaginationItemProps>)
+        | Partial<PaginationItemProps>;
+      PreviousButtonProps?: Partial<IconButtonProps>;
+      RootProps?: Partial<BoxProps>;
+      SelectLabelProps?: Partial<InputLabelProps>;
       SelectProps?: Partial<SelectProps>;
       disabled?: boolean;
       rowsPerPageOptions?: { label: string; value: number }[] | number[];
@@ -65,6 +80,14 @@ export const MRT_TablePagination = <TData extends MRT_RowData>({
   const lastRowIndex = Math.min(pageIndex * pageSize + pageSize, totalRowCount);
 
   const {
+    DisplayedRowsProps,
+    FirstButtonProps,
+    LastButtonProps,
+    NextButtonProps,
+    PaginationItemProps,
+    PreviousButtonProps,
+    RootProps,
+    SelectLabelProps,
     SelectProps = {},
     disabled = false,
     rowsPerPageOptions = defaultRowsPerPage,
@@ -85,8 +108,11 @@ export const MRT_TablePagination = <TData extends MRT_RowData>({
 
   return (
     <Box
-      className="MuiTablePagination-root"
-      sx={{
+      {...RootProps}
+      className={`MuiTablePagination-root${
+        RootProps?.className ? ` ${RootProps.className}` : ''
+      }`}
+      sx={(theme) => ({
         alignItems: 'center',
         display: 'flex',
         flexWrap: 'wrap',
@@ -101,29 +127,42 @@ export const MRT_TablePagination = <TData extends MRT_RowData>({
         px: '8px',
         py: '12px',
         zIndex: 2,
-      }}
+        ...(parseFromValuesOrFunc(RootProps?.sx, theme) as any),
+      })}
     >
       {showRowsPerPage && (
         <Box sx={{ alignItems: 'center', display: 'flex', gap: '8px' }}>
-          <InputLabel htmlFor={`mrt-rows-per-page-${id}`} sx={{ mb: 0 }}>
-            {localization.rowsPerPage}
+          <InputLabel
+            htmlFor={`mrt-rows-per-page-${id}`}
+            {...SelectLabelProps}
+            sx={(theme) => ({
+              mb: 0,
+              ...(parseFromValuesOrFunc(SelectLabelProps?.sx, theme) as any),
+            })}
+          >
+            {SelectLabelProps?.children ?? localization.rowsPerPage}
           </InputLabel>
           <Select
-            MenuProps={{ disableScrollLock: true }}
             disableUnderline
             disabled={disabled}
-            inputProps={{
-              'aria-label': localization.rowsPerPage,
-              id: `mrt-rows-per-page-${id}`,
-            }}
             label={localization.rowsPerPage}
-            onChange={(event) =>
-              table.setPageSize(+(event.target.value as any))
-            }
-            sx={{ mb: 0 }}
             value={pageSize}
             variant="standard"
             {...SelectProps}
+            MenuProps={{ disableScrollLock: true, ...SelectProps?.MenuProps }}
+            inputProps={{
+              'aria-label': localization.rowsPerPage,
+              id: `mrt-rows-per-page-${id}`,
+              ...SelectProps?.inputProps,
+            }}
+            onChange={(event, child) => {
+              SelectProps?.onChange?.(event, child);
+              table.setPageSize(+(event.target.value as any));
+            }}
+            sx={(theme) => ({
+              mb: 0,
+              ...(parseFromValuesOrFunc(SelectProps?.sx, theme) as any),
+            })}
           >
             {rowsPerPageOptions.map((option) => {
               const value = typeof option !== 'number' ? option.value : option;
@@ -149,48 +188,69 @@ export const MRT_TablePagination = <TData extends MRT_RowData>({
         <Pagination
           count={numberOfPages}
           disabled={disabled}
-          onChange={(_e, newPageIndex) => table.setPageIndex(newPageIndex - 1)}
           page={pageIndex + 1}
-          renderItem={(item) => (
-            <PaginationItem
-              slots={{
-                first: FirstPageIcon,
-                last: LastPageIcon,
-                next: ChevronRightIcon,
-                previous: ChevronLeftIcon,
-              }}
-              {...item}
-            />
-          )}
           showFirstButton={showFirstButton}
           showLastButton={showLastButton}
           {...restPaginationProps}
+          onChange={(event, newPageIndex) => {
+            restPaginationProps?.onChange?.(event, newPageIndex);
+            table.setPageIndex(newPageIndex - 1);
+          }}
+          renderItem={
+            restPaginationProps?.renderItem ??
+            ((item) => (
+              <PaginationItem
+                slots={{
+                  first: FirstPageIcon,
+                  last: LastPageIcon,
+                  next: ChevronRightIcon,
+                  previous: ChevronLeftIcon,
+                }}
+                {...parseFromValuesOrFunc(PaginationItemProps, item)}
+                {...item}
+              />
+            ))
+          }
         />
       ) : paginationDisplayMode === 'default' ? (
         <>
           <Typography
             align="center"
             component="span"
-            sx={{ m: '0 4px', minWidth: '8ch' }}
             variant="body2"
-          >{`${
-            lastRowIndex === 0
-              ? 0
-              : (firstRowIndex + 1).toLocaleString(localization.language)
-          }-${lastRowIndex.toLocaleString(localization.language)} ${
-            localization.of
-          } ${totalRowCount.toLocaleString(localization.language)}`}</Typography>
+            {...DisplayedRowsProps}
+            sx={(theme) => ({
+              m: '0 4px',
+              minWidth: '8ch',
+              ...(parseFromValuesOrFunc(DisplayedRowsProps?.sx, theme) as any),
+            })}
+          >
+            {DisplayedRowsProps?.children ??
+              `${
+                lastRowIndex === 0
+                  ? 0
+                  : (firstRowIndex + 1).toLocaleString(localization.language)
+              }-${lastRowIndex.toLocaleString(localization.language)} ${
+                localization.of
+              } ${totalRowCount.toLocaleString(localization.language)}`}
+          </Typography>
           <Box gap="xs">
             {showFirstButton && (
               <Tooltip {...tooltipProps} title={localization.goToFirstPage}>
                 <span>
                   <IconButton
                     aria-label={localization.goToFirstPage}
-                    disabled={disableBack}
-                    onClick={() => table.firstPage()}
                     size="small"
+                    {...FirstButtonProps}
+                    disabled={disableBack || !!FirstButtonProps?.disabled}
+                    onClick={(event) => {
+                      FirstButtonProps?.onClick?.(event);
+                      table.firstPage();
+                    }}
                   >
-                    <FirstPageIcon {...flipIconStyles(theme)} />
+                    {FirstButtonProps?.children ?? (
+                      <FirstPageIcon {...flipIconStyles(theme)} />
+                    )}
                   </IconButton>
                 </span>
               </Tooltip>
@@ -199,11 +259,17 @@ export const MRT_TablePagination = <TData extends MRT_RowData>({
               <span>
                 <IconButton
                   aria-label={localization.goToPreviousPage}
-                  disabled={disableBack}
-                  onClick={() => table.previousPage()}
                   size="small"
+                  {...PreviousButtonProps}
+                  disabled={disableBack || !!PreviousButtonProps?.disabled}
+                  onClick={(event) => {
+                    PreviousButtonProps?.onClick?.(event);
+                    table.previousPage();
+                  }}
                 >
-                  <ChevronLeftIcon {...flipIconStyles(theme)} />
+                  {PreviousButtonProps?.children ?? (
+                    <ChevronLeftIcon {...flipIconStyles(theme)} />
+                  )}
                 </IconButton>
               </span>
             </Tooltip>
@@ -211,11 +277,17 @@ export const MRT_TablePagination = <TData extends MRT_RowData>({
               <span>
                 <IconButton
                   aria-label={localization.goToNextPage}
-                  disabled={disableNext}
-                  onClick={() => table.nextPage()}
                   size="small"
+                  {...NextButtonProps}
+                  disabled={disableNext || !!NextButtonProps?.disabled}
+                  onClick={(event) => {
+                    NextButtonProps?.onClick?.(event);
+                    table.nextPage();
+                  }}
                 >
-                  <ChevronRightIcon {...flipIconStyles(theme)} />
+                  {NextButtonProps?.children ?? (
+                    <ChevronRightIcon {...flipIconStyles(theme)} />
+                  )}
                 </IconButton>
               </span>
             </Tooltip>
@@ -224,11 +296,17 @@ export const MRT_TablePagination = <TData extends MRT_RowData>({
                 <span>
                   <IconButton
                     aria-label={localization.goToLastPage}
-                    disabled={disableNext}
-                    onClick={() => table.lastPage()}
                     size="small"
+                    {...LastButtonProps}
+                    disabled={disableNext || !!LastButtonProps?.disabled}
+                    onClick={(event) => {
+                      LastButtonProps?.onClick?.(event);
+                      table.lastPage();
+                    }}
                   >
-                    <LastPageIcon {...flipIconStyles(theme)} />
+                    {LastButtonProps?.children ?? (
+                      <LastPageIcon {...flipIconStyles(theme)} />
+                    )}
                   </IconButton>
                 </span>
               </Tooltip>

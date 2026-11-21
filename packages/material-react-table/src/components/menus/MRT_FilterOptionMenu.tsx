@@ -9,6 +9,7 @@ import {
   type MRT_RowData,
   type MRT_TableInstance,
 } from '../../types';
+import { parseFromValuesOrFunc } from '../../utils/utils';
 
 export const mrtFilterOptions = (
   localization: MRT_Localization,
@@ -130,6 +131,7 @@ export const MRT_FilterOptionMenu = <TData extends MRT_RowData>({
       globalFilterModeOptions,
       localization,
       mrtTheme: { menuBackgroundColor },
+      muiFilterOptionMenuProps,
       renderColumnFilterModeMenuItems,
       renderGlobalFilterModeMenuItems,
     },
@@ -139,6 +141,14 @@ export const MRT_FilterOptionMenu = <TData extends MRT_RowData>({
   const { density, globalFilterFn } = getState();
   const { column } = header ?? {};
   const { columnDef } = column ?? {};
+
+  const { MenuListProps, ...menuProps } = {
+    ...parseFromValuesOrFunc(muiFilterOptionMenuProps, {
+      column,
+      table,
+    }),
+    ...rest,
+  };
   const currentFilterValue = column?.getFilterValue();
 
   let allowedColumnFilterOptions =
@@ -240,18 +250,20 @@ export const MRT_FilterOptionMenu = <TData extends MRT_RowData>({
 
   return (
     <Menu
-      MenuListProps={{
-        dense: density === 'compact',
-        sx: {
-          backgroundColor: menuBackgroundColor,
-        },
-      }}
       anchorEl={anchorEl}
       anchorOrigin={{ horizontal: 'right', vertical: 'center' }}
       disableScrollLock
       onClose={() => setAnchorEl(null)}
       open={!!anchorEl}
-      {...rest}
+      {...menuProps}
+      MenuListProps={{
+        ...MenuListProps,
+        dense: MenuListProps?.dense ?? density === 'compact',
+        sx: (theme) => ({
+          backgroundColor: menuBackgroundColor,
+          ...(parseFromValuesOrFunc(MenuListProps?.sx, theme) as any),
+        }),
+      }}
     >
       {(header && column && columnDef
         ? (columnDef.renderColumnFilterModeMenuItems?.({

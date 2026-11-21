@@ -7,6 +7,7 @@ import {
   type MRT_RowData,
   type MRT_TableInstance,
 } from '../../types';
+import { parseFromValuesOrFunc } from '../../utils/utils';
 
 export interface MRT_ColumnActionMenuProps<TData extends MRT_RowData>
   extends Partial<MenuProps> {
@@ -50,6 +51,7 @@ export const MRT_ColumnActionMenu = <TData extends MRT_RowData>({
       },
       localization,
       mrtTheme: { menuBackgroundColor },
+      muiColumnActionMenuProps,
       renderColumnActionsMenuItems,
     },
     refs: { filterInputRefs },
@@ -62,6 +64,18 @@ export const MRT_ColumnActionMenu = <TData extends MRT_RowData>({
   const { columnDef } = column;
   const { columnSizing, columnVisibility, density, showColumnFilters } =
     getState();
+
+  const { MenuListProps, ...menuProps } = {
+    ...parseFromValuesOrFunc(muiColumnActionMenuProps, {
+      column,
+      table,
+    }),
+    ...parseFromValuesOrFunc(columnDef.muiColumnActionMenuProps, {
+      column,
+      table,
+    }),
+    ...rest,
+  };
   const columnFilterValue = column.getFilterValue();
 
   const [filterMenuAnchorEl, setFilterMenuAnchorEl] =
@@ -320,17 +334,19 @@ export const MRT_ColumnActionMenu = <TData extends MRT_RowData>({
 
   return (
     <Menu
-      MenuListProps={{
-        dense: density === 'compact',
-        sx: {
-          backgroundColor: menuBackgroundColor,
-        },
-      }}
       anchorEl={anchorEl}
       disableScrollLock
       onClose={() => setAnchorEl(null)}
       open={!!anchorEl}
-      {...rest}
+      {...menuProps}
+      MenuListProps={{
+        ...MenuListProps,
+        dense: MenuListProps?.dense ?? density === 'compact',
+        sx: (theme) => ({
+          backgroundColor: menuBackgroundColor,
+          ...(parseFromValuesOrFunc(MenuListProps?.sx, theme) as any),
+        }),
+      }}
     >
       {columnDef.renderColumnActionsMenuItems?.({
         closeMenu: () => setAnchorEl(null),

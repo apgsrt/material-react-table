@@ -1,8 +1,8 @@
-import Badge from '@mui/material/Badge';
+import Badge, { type BadgeProps } from '@mui/material/Badge';
 import TableSortLabel, {
   type TableSortLabelProps,
 } from '@mui/material/TableSortLabel';
-import Tooltip from '@mui/material/Tooltip';
+import Tooltip, { type TooltipProps } from '@mui/material/Tooltip';
 import {
   type MRT_Header,
   type MRT_RowData,
@@ -12,6 +12,8 @@ import { parseFromValuesOrFunc } from '../../utils/utils';
 
 export interface MRT_TableHeadCellSortLabelProps<TData extends MRT_RowData>
   extends TableSortLabelProps {
+  BadgeProps?: Partial<BadgeProps>;
+  TooltipProps?: Partial<TooltipProps>;
   header: MRT_Header<TData>;
   table: MRT_TableInstance<TData>;
 }
@@ -26,11 +28,24 @@ export const MRT_TableHeadCellSortLabel = <TData extends MRT_RowData>({
     options: {
       icons: { ArrowDownwardIcon, SyncAltIcon },
       localization,
+      muiTableHeadCellSortLabelProps,
     },
   } = table;
   const { column } = header;
   const { columnDef } = column;
   const { isLoading, showSkeletons, sorting } = getState();
+
+  const { BadgeProps, TooltipProps, ...tableSortLabelProps } = {
+    ...parseFromValuesOrFunc(muiTableHeadCellSortLabelProps, {
+      column,
+      table,
+    }),
+    ...parseFromValuesOrFunc(columnDef.muiTableHeadCellSortLabelProps, {
+      column,
+      table,
+    }),
+    ...rest,
+  };
 
   const isSorted = !!column.getIsSorted();
 
@@ -53,10 +68,11 @@ export const MRT_TableHeadCellSortLabel = <TData extends MRT_RowData>({
     : undefined;
 
   return (
-    <Tooltip placement="top" title={sortTooltip}>
+    <Tooltip placement="top" title={sortTooltip} {...TooltipProps}>
       <Badge
         badgeContent={sorting.length > 1 ? column.getSortIndex() + 1 : 0}
         overlap="circular"
+        {...BadgeProps}
       >
         <TableSortLabel
           IconComponent={
@@ -75,11 +91,12 @@ export const MRT_TableHeadCellSortLabel = <TData extends MRT_RowData>({
           active
           aria-label={sortTooltip}
           direction={direction}
+          {...tableSortLabelProps}
           onClick={(e) => {
             e.stopPropagation();
+            tableSortLabelProps?.onClick?.(e as any);
             header.column.getToggleSortingHandler()?.(e);
           }}
-          {...rest}
           sx={(theme) => ({
             '.MuiTableSortLabel-icon': {
               color: `${
@@ -92,7 +109,7 @@ export const MRT_TableHeadCellSortLabel = <TData extends MRT_RowData>({
             opacity: isSorted ? 1 : 0.3,
             transition: 'all 150ms ease-in-out',
             width: '3ch',
-            ...(parseFromValuesOrFunc(rest?.sx, theme) as any),
+            ...(parseFromValuesOrFunc(tableSortLabelProps?.sx, theme) as any),
           })}
         />
       </Badge>
