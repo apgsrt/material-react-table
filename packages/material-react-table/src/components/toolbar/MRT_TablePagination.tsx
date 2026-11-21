@@ -14,7 +14,11 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography, { type TypographyProps } from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { type MRT_RowData, type MRT_TableInstance } from '../../types';
+import {
+  type MRT_RowData,
+  type MRT_TableInstance,
+  type MRT_WithDataAttributes,
+} from '../../types';
 import { flipIconStyles, getCommonTooltipProps } from '../../utils/style.utils';
 import { parseFromValuesOrFunc } from '../../utils/utils';
 
@@ -23,17 +27,19 @@ const defaultRowsPerPage = [5, 10, 15, 20, 25, 30, 50, 100];
 export interface MRT_TablePaginationProps<TData extends MRT_RowData>
   extends Partial<
     PaginationProps & {
-      DisplayedRowsProps?: Partial<TypographyProps>;
-      FirstButtonProps?: Partial<IconButtonProps>;
-      LastButtonProps?: Partial<IconButtonProps>;
-      NextButtonProps?: Partial<IconButtonProps>;
+      DisplayedRowsProps?: MRT_WithDataAttributes<Partial<TypographyProps>>;
+      FirstButtonProps?: MRT_WithDataAttributes<Partial<IconButtonProps>>;
+      LastButtonProps?: MRT_WithDataAttributes<Partial<IconButtonProps>>;
+      NextButtonProps?: MRT_WithDataAttributes<Partial<IconButtonProps>>;
       PaginationItemProps?:
-        | ((item: PaginationRenderItemParams) => Partial<PaginationItemProps>)
-        | Partial<PaginationItemProps>;
-      PreviousButtonProps?: Partial<IconButtonProps>;
-      RootProps?: Partial<BoxProps>;
-      SelectLabelProps?: Partial<InputLabelProps>;
-      SelectProps?: Partial<SelectProps>;
+        | ((
+            item: PaginationRenderItemParams,
+          ) => MRT_WithDataAttributes<Partial<PaginationItemProps>>)
+        | MRT_WithDataAttributes<Partial<PaginationItemProps>>;
+      PreviousButtonProps?: MRT_WithDataAttributes<Partial<IconButtonProps>>;
+      RootProps?: MRT_WithDataAttributes<Partial<BoxProps>>;
+      SelectLabelProps?: MRT_WithDataAttributes<Partial<InputLabelProps>>;
+      SelectProps?: MRT_WithDataAttributes<Partial<SelectProps>>;
       disabled?: boolean;
       rowsPerPageOptions?: { label: string; value: number }[] | number[];
       showRowsPerPage?: boolean;

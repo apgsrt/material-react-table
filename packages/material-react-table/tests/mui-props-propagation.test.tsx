@@ -1,12 +1,12 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-
-afterEach(cleanup);
 import {
   MaterialReactTable,
   useMaterialReactTable,
   type MRT_ColumnDef,
 } from '../src/index';
+
+afterEach(cleanup);
 
 type Person = { age: number; name: string };
 
@@ -25,38 +25,36 @@ const columns: MRT_ColumnDef<Person>[] = [
   { accessorKey: 'age', header: 'Age' },
 ];
 
-// NOTE: `data-testid` in mui*Props objects still needs a cast until the
-// mui*Props types accept data-* attributes. These tests pin the runtime
-// propagation so the attributes reach the DOM either way.
-const testId = (id: string) => ({ 'data-testid': id }) as any;
-
+// `data-testid` in mui*Props objects is accepted by the option types
+// (see MRT_DataAttributes in types.ts) and must reach the DOM. The one
+// exception below is inside MUI-owned slotProps, whose types MRT cannot
+// widen, so that single spot keeps a narrow cast.
 const HeaderTable = () => {
   const table = useMaterialReactTable<Person>({
     columnFilterDisplayMode: 'popover',
     columns,
     data,
     enableColumnResizing: true,
-    muiColumnActionMenuProps: ({ column }) =>
-      ({
-        ...testId(`col-action-menu-${column.id}`),
-        slotProps: {
-          paper: testId(`col-action-menu-paper-${column.id}`),
-        },
-      }) as any,
-    muiColumnActionsButtonProps: ({ column }) =>
-      testId(`colactions-${column.id}`),
-    muiTableHeadCellFilterLabelProps: ({ column }) =>
-      testId(`filter-${column.id}`),
-    muiTableHeadCellResizeHandleProps: ({ column }) =>
-      ({
-        ...testId(`resize-divider-${column.id}`),
-        BoxProps: testId(`resize-${column.id}`),
-      }) as any,
-    muiTableHeadCellSortLabelProps: ({ column }) =>
-      ({
-        ...testId(`sort-${column.id}`),
-        className: 'custom-sort-label',
-      }) as any,
+    muiColumnActionMenuProps: ({ column }) => ({
+      'data-testid': `col-action-menu-${column.id}`,
+      slotProps: {
+        paper: { 'data-testid': `col-action-menu-paper-${column.id}` } as any,
+      },
+    }),
+    muiColumnActionsButtonProps: ({ column }) => ({
+      'data-testid': `colactions-${column.id}`,
+    }),
+    muiTableHeadCellFilterLabelProps: ({ column }) => ({
+      'data-testid': `filter-${column.id}`,
+    }),
+    muiTableHeadCellResizeHandleProps: ({ column }) => ({
+      'data-testid': `resize-divider-${column.id}`,
+      BoxProps: { 'data-testid': `resize-${column.id}` },
+    }),
+    muiTableHeadCellSortLabelProps: ({ column }) => ({
+      'data-testid': `sort-${column.id}`,
+      className: 'custom-sort-label',
+    }),
   });
   return <MaterialReactTable table={table} />;
 };
@@ -107,24 +105,25 @@ const DefaultPaginationTable = () => {
     columns,
     data,
     muiPaginationProps: {
-      DisplayedRowsProps: testId('displayed-rows'),
-      FirstButtonProps: testId('first-page'),
-      LastButtonProps: testId('last-page'),
+      DisplayedRowsProps: { 'data-testid': 'displayed-rows' },
+      FirstButtonProps: { 'data-testid': 'first-page' },
+      LastButtonProps: { 'data-testid': 'last-page' },
       NextButtonProps: {
-        ...testId('next-page'),
+        'data-testid': 'next-page',
         className: 'custom-next-page',
       },
-      PreviousButtonProps: testId('prev-page'),
+      PreviousButtonProps: { 'data-testid': 'prev-page' },
       RootProps: {
-        ...testId('pagination-root'),
+        'data-testid': 'pagination-root',
         className: 'custom-pagination-root',
       },
-      SelectLabelProps: testId('rpp-label'),
+      SelectLabelProps: { 'data-testid': 'rpp-label' },
       SelectProps: {
-        ...testId('rpp-select'),
-        inputProps: testId('rpp-input'),
+        'data-testid': 'rpp-select',
+        // MUI-owned nested type; cannot be widened by MRT
+        inputProps: { 'data-testid': 'rpp-input' } as any,
       },
-    } as any,
+    },
   });
   return <MaterialReactTable table={table} />;
 };
@@ -183,10 +182,11 @@ const PagesPaginationTable = () => {
     columns,
     data,
     muiPaginationProps: {
-      ...testId('pages-nav'),
-      PaginationItemProps: (item: { page: number | null; type: string }) =>
-        testId(`page-item-${item.type}-${item.page}`),
-    } as any,
+      'data-testid': 'pages-nav',
+      PaginationItemProps: (item) => ({
+        'data-testid': `page-item-${item.type}-${item.page}`,
+      }),
+    },
     paginationDisplayMode: 'pages',
   });
   return <MaterialReactTable table={table} />;
